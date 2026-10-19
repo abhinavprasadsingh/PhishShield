@@ -2,7 +2,7 @@
 
 PhishShield is a Python-based project that analyzes URL patterns to identify potentially suspicious links, with a Streamlit interface and machine learning model training and evaluation.
 
-> **Current project status:** The Streamlit app supports explainable heuristic demo mode and can load a trained model from `models/phishing_model.joblib` when that file is present. A supervised training run has completed in GitHub Actions using UCI PhiUSIIL dataset 967; the trained model and evaluation logs are available as a temporary Actions artifact (30-day retention). The model artifact is not committed to this repository, so do not assume the public app is currently serving this trained model.
+> **Current project status:** The Streamlit app supports explainable heuristic demo mode and loads the trained model from `models/phishing_model.joblib` when the artifact is available and compatible. The trained model is committed to this repository, and a regression test checks that it loads and produces inference outputs. These repository checks do not prove that the hosted Streamlit deployment has loaded the model; verify the live deployment separately.
 
 ## Why this matters
 
@@ -13,7 +13,7 @@ Fake banking links, delivery notifications, login pages, and fraudulent offers c
 - Premium dark Streamlit interface
 - URL parsing and feature extraction without visiting the submitted URL
 - Explainable heuristic demo mode when no trained model is available
-- Optional scikit-learn model loaded from `models/phishing_model.joblib`
+- Trained scikit-learn model committed at `models/phishing_model.joblib`, with a CI inference regression test
 - Shows extracted features and human-readable warning signals
 - Training pipeline compares Logistic Regression, Random Forest, and HistGradientBoosting
 - Evaluation reporting for accuracy, precision, recall, F1, average precision (PR-AUC), and a confusion matrix
@@ -73,7 +73,7 @@ python scripts/prepare_uci_dataset.py
 python -m src.train --input data/urls.csv --output models/phishing_model.joblib
 ```
 
-The latest successful [GitHub Actions training run](https://github.com/abhinavprasadsingh/PhishShield/actions/runs/38618944295) compares three classifiers and uploads the model plus logs as an artifact. See [measured results and caveats](reports/evaluation.md).
+The [model-publishing workflow](https://github.com/abhinavprasadsingh/PhishShield/actions) verifies and publishes the trained artifact. Earlier training runs uploaded model and evaluation logs as temporary artifacts. See [measured results and caveats](reports/evaluation.md).
 
 The training script removes exact duplicate URLs, compares Logistic Regression, Random Forest, and HistGradientBoosting, reports evaluation metrics, and saves the selected model to `models/phishing_model.joblib`. Review [the evaluation notes](reports/evaluation.md). Metrics depend on dataset quality, label reliability, and split design; do not claim performance without running and documenting the experiment.
 
