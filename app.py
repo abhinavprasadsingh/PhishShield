@@ -204,6 +204,154 @@ footer { visibility:hidden; }
 </div>
 """, unsafe_allow_html=True)
 
+# PhishShield premium UI layer
+st.markdown("""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+
+:root {
+ --ps-cyan:#65e8f5;
+ --ps-violet:#a78bfa;
+ --ps-line:rgba(148,177,220,.17);
+}
+
+html { scroll-behavior:smooth; }
+
+.stApp {
+ background:
+ radial-gradient(ellipse at 12% 0%,rgba(34,211,238,.13),transparent 34%),
+ radial-gradient(ellipse at 92% 12%,rgba(139,92,246,.14),transparent 32%),
+ linear-gradient(145deg,#070b16,#0b1222 52%,#080d19);
+ font-family:'DM Sans',sans-serif;
+}
+
+.block-container {
+ max-width:1400px;
+ padding-top:1.5rem;
+ padding-bottom:4rem;
+}
+
+h1,h2,h3,h4,[data-testid="stMetricValue"] {
+ font-family:'Space Grotesk',sans-serif!important;
+}
+
+[data-testid="stSidebar"] {
+ background:linear-gradient(180deg,#111d34,#091222);
+ border-right:1px solid var(--ps-line);
+}
+
+[data-testid="stMetric"] {
+ background:linear-gradient(145deg,rgba(20,39,66,.92),rgba(12,22,42,.94));
+ border:1px solid var(--ps-line);
+ border-radius:18px;
+ padding:12px;
+ transition:transform .25s,border-color .25s,box-shadow .25s;
+}
+
+[data-testid="stMetric"]:hover {
+ transform:translateY(-4px);
+ border-color:rgba(101,232,245,.55);
+ box-shadow:0 14px 35px rgba(0,0,0,.24),0 0 22px rgba(101,232,245,.08);
+}
+
+[data-testid="stMetricValue"] { color:var(--ps-cyan); }
+
+.stTextInput input,.stTextArea textarea,.stFileUploader section {
+ background:rgba(7,14,29,.82)!important;
+ border:1px solid rgba(148,177,220,.24)!important;
+ border-radius:14px!important;
+ color:#f3f7ff!important;
+ transition:border-color .2s,box-shadow .2s;
+}
+
+.stTextInput input:focus,.stTextArea textarea:focus {
+ border-color:var(--ps-cyan)!important;
+ box-shadow:0 0 0 1px rgba(101,232,245,.5),0 0 22px rgba(101,232,245,.1)!important;
+}
+
+.stButton button,.stFormSubmitButton button,.stDownloadButton button {
+ border-radius:13px!important;
+ min-height:2.8rem;
+ font-weight:700!important;
+ transition:transform .2s,box-shadow .2s,filter .2s!important;
+}
+
+.stButton button:hover,.stFormSubmitButton button:hover,.stDownloadButton button:hover {
+ transform:translateY(-2px);
+ box-shadow:0 10px 26px rgba(101,232,245,.13);
+ filter:brightness(1.08);
+}
+
+.stButton button[kind="primary"],.stFormSubmitButton button[kind="primary"] {
+ background:linear-gradient(105deg,#65e8f5,#8acbff 55%,#a78bfa)!important;
+ color:#07111f!important;
+ border:0!important;
+}
+
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+ gap:7px;
+ background:rgba(7,14,28,.72);
+ padding:7px;
+ border:1px solid var(--ps-line);
+ border-radius:15px;
+}
+
+[data-testid="stTabs"] button[role="tab"] {
+ border-radius:10px;
+ transition:all .2s;
+}
+
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+ background:linear-gradient(110deg,rgba(101,232,245,.16),rgba(167,139,250,.17));
+ color:#effcff;
+}
+
+[data-testid="stExpander"] {
+ background:rgba(12,21,40,.72);
+ border:1px solid var(--ps-line);
+ border-radius:15px;
+ overflow:hidden;
+}
+
+[data-testid="stDataFrame"],[data-testid="stTable"] {
+ border:1px solid var(--ps-line);
+ border-radius:13px;
+ overflow:hidden;
+}
+
+[data-testid="stAlert"] { border-radius:14px; }
+
+.stProgress>div>div>div>div {
+ background:linear-gradient(90deg,#65e8f5,#a78bfa);
+}
+
+hr { border-color:var(--ps-line); }
+a { color:#81eaf5!important; }
+
+@keyframes psEnter {
+ from { opacity:0;transform:translateY(12px); }
+ to { opacity:1;transform:translateY(0); }
+}
+
+[data-testid="stVerticalBlock"]>div {
+ animation:psEnter .48s ease both;
+}
+
+@media(prefers-reduced-motion:reduce) {
+ *,*::before,*::after {
+  animation:none!important;
+  transition:none!important;
+  scroll-behavior:auto!important;
+ }
+}
+
+@media(max-width:800px) {
+ .block-container { padding-left:.8rem;padding-right:.8rem; }
+ [data-testid="stTabs"] [data-baseweb="tab-list"] { overflow-x:auto; }
+}
+</style>
+""", unsafe_allow_html=True)
+
 with st.sidebar:
     st.markdown("## 🛡️ PhishShield")
     st.caption("URL THREAT ANALYSIS")
