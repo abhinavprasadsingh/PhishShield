@@ -352,6 +352,179 @@ a { color:#81eaf5!important; }
 </style>
 """, unsafe_allow_html=True)
 
+
+# PhishShield Cursor-inspired interface
+st.markdown("""
+<style>
+:root {
+  color-scheme: dark;
+  --cursor-bg: #08090d;
+  --cursor-panel: #0e1017;
+  --cursor-panel-2: #11131b;
+  --cursor-border: #252834;
+  --cursor-muted: #9297a7;
+  --cursor-text: #f3f4f8;
+  --cursor-accent: #b9a5ff;
+  --cursor-accent-2: #8e79f5;
+}
+html { scroll-behavior: smooth; }
+.stApp {
+  background:
+    radial-gradient(ellipse at 50% -20%, rgba(125, 99, 220, .13), transparent 42%),
+    radial-gradient(ellipse at 100% 45%, rgba(70, 87, 150, .07), transparent 34%),
+    var(--cursor-bg);
+  color: var(--cursor-text);
+}
+.block-container {
+  max-width: 1180px;
+  padding: 1rem 1.5rem 4rem;
+}
+[data-testid="stHeader"] { display: none; }
+[data-testid="stToolbar"], [data-testid="stDecoration"] { display: none !important; }
+[data-testid="stSidebar"] {
+  background: #0a0b10;
+  border-right: 1px solid #20222c;
+}
+[data-testid="stSidebar"] > div { padding-top: 1.2rem; }
+[data-testid="stSidebar"] h2 { font-size: 1.05rem; letter-spacing: -.04em; }
+[data-testid="stSidebar"] hr { border-color: #242631; }
+.hero { display: none !important; }
+.cursor-topbar {
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  padding:.65rem 0 1rem; margin-bottom:2.6rem;
+  border-bottom:1px solid rgba(255,255,255,.075);
+}
+.cursor-brand { display:flex; align-items:center; gap:.65rem; color:#f3f2fa; font-weight:700; letter-spacing:-.035em; }
+.cursor-brand-mark {
+  display:grid; place-items:center; width:27px; height:27px; border-radius:8px;
+  color:#0b0a12; font-size:15px; font-weight:900;
+  background:linear-gradient(145deg,#d9ceff,#9279f2);
+  box-shadow:0 0 24px rgba(161,139,255,.22);
+}
+.cursor-top-meta { color:#85899a; font-size:.72rem; letter-spacing:.13em; text-transform:uppercase; }
+.cursor-hero { padding:0 0 2rem; margin-bottom:1.2rem; animation:cursor-enter .55s ease both; }
+.cursor-kicker {
+  color:#b5a2ff; font-size:.69rem; font-weight:700; letter-spacing:.19em;
+  text-transform:uppercase; margin-bottom:1rem;
+}
+.cursor-title {
+  color:#f4f3f8; font-family:'Space Grotesk',sans-serif;
+  font-size:clamp(2.8rem,6.5vw,5.1rem); line-height:.99;
+  letter-spacing:-.075em; font-weight:700; margin:0 0 1.15rem;
+}
+.cursor-title span {
+  background:linear-gradient(100deg,#d9d0ff 0%,#a996ff 50%,#8c9bff 100%);
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.cursor-description { max-width:660px; color:#a7aaba; font-size:1.02rem; line-height:1.8; }
+.cursor-trust { display:flex; flex-wrap:wrap; gap:.55rem; margin-top:1.45rem; }
+.cursor-chip {
+  border:1px solid #292b39; background:rgba(255,255,255,.025);
+  color:#b9bdcb; border-radius:999px; padding:.42rem .72rem; font-size:.72rem;
+}
+h1,h2,h3,h4 { font-family:'Space Grotesk',sans-serif !important; letter-spacing:-.045em; }
+h2,h3 { color:#f1f0f7; }
+h3 { font-size:1.35rem !important; }
+p { line-height:1.72; }
+[data-testid="stCaptionContainer"], .muted { color:var(--cursor-muted); }
+[data-testid="stForm"] {
+  background:linear-gradient(145deg,rgba(17,19,28,.96),rgba(12,14,21,.96));
+  border:1px solid #2a2c39; border-radius:18px;
+  padding:1.1rem 1.15rem .8rem; box-shadow:0 22px 70px rgba(0,0,0,.22);
+}
+.stTextInput label { color:#d5d6df !important; font-size:.82rem; }
+.stTextInput input, .stTextArea textarea {
+  background:#090b11 !important; color:#f2f1f8 !important;
+  border:1px solid #303342 !important; border-radius:11px !important;
+  min-height:3.15rem; transition:border-color .2s,box-shadow .2s;
+}
+.stTextInput input:focus, .stTextArea textarea:focus {
+  border-color:#a995ff !important;
+  box-shadow:0 0 0 1px rgba(169,149,255,.35),0 0 24px rgba(151,126,255,.08) !important;
+}
+.stButton button, .stFormSubmitButton button, .stDownloadButton button {
+  border-radius:10px !important; min-height:2.85rem; font-weight:650 !important;
+  transition:transform .2s ease,background .2s ease,border-color .2s ease,box-shadow .2s ease !important;
+}
+.stFormSubmitButton button[kind="primary"], .stButton button[kind="primary"] {
+  background:linear-gradient(105deg,#c9bcff,#a995ff 60%,#9885f7) !important;
+  color:#100d1c !important; border:1px solid #c9bcff !important;
+  box-shadow:0 5px 22px rgba(157,133,255,.12);
+}
+.stFormSubmitButton button[kind="primary"]:hover, .stButton button[kind="primary"]:hover {
+  transform:translateY(-1px); box-shadow:0 9px 28px rgba(157,133,255,.22);
+}
+.stDownloadButton button, .stButton button {
+  border:1px solid #343746;
+}
+[data-testid="stMetric"] {
+  background:linear-gradient(145deg,#12141d,#0d0f16);
+  border:1px solid #292c39; border-radius:14px; padding:1rem;
+  transition:transform .22s,border-color .22s,box-shadow .22s;
+}
+[data-testid="stMetric"]:hover {
+  transform:translateY(-3px); border-color:#62548d;
+  box-shadow:0 14px 35px rgba(0,0,0,.2);
+}
+[data-testid="stMetricLabel"] { color:#a5a8b7; }
+[data-testid="stMetricValue"] { color:#c4b5fd; font-family:'Space Grotesk',sans-serif; }
+.panel {
+  background:linear-gradient(145deg,#11131b,#0c0e15) !important;
+  border:1px solid #292c38 !important; border-radius:15px !important;
+  box-shadow:none !important; transition:border-color .2s,transform .2s;
+}
+.panel:hover { border-color:#4a4563 !important; transform:translateY(-2px); }
+[data-testid="stExpander"] {
+  background:#0d0f16; border:1px solid #292c38; border-radius:13px; overflow:hidden;
+}
+[data-testid="stTabs"] [data-baseweb="tab-list"] {
+  gap:.35rem; background:#0d0f15; padding:.35rem;
+  border:1px solid #272a35; border-radius:12px;
+}
+[data-testid="stTabs"] button[role="tab"] { border-radius:8px; color:#aeb0bd; }
+[data-testid="stTabs"] button[role="tab"][aria-selected="true"] {
+  background:#242033; color:#e4dcff;
+}
+[data-testid="stDataFrame"], [data-testid="stTable"] {
+  border:1px solid #292c38; border-radius:12px; overflow:hidden;
+}
+[data-testid="stAlert"] { border-radius:12px; }
+.stProgress > div > div > div > div { background:linear-gradient(90deg,#a995ff,#82a3ff); }
+hr { border-color:#252834; }
+a { color:#b9a5ff !important; }
+footer { visibility:hidden; }
+@keyframes cursor-enter {
+  from { opacity:0; transform:translateY(12px); }
+  to { opacity:1; transform:translateY(0); }
+}
+@media(prefers-reduced-motion:reduce) {
+  *,*::before,*::after { animation:none !important; transition:none !important; scroll-behavior:auto !important; }
+}
+@media(max-width:800px) {
+  .block-container { padding:.75rem .85rem 2.5rem; }
+  .cursor-topbar { margin-bottom:2rem; }
+  .cursor-top-meta { display:none; }
+  .cursor-title { font-size:clamp(2.65rem,12vw,3.8rem); }
+  .cursor-description { font-size:.94rem; }
+}
+</style>
+<div class="cursor-topbar">
+  <div class="cursor-brand"><span class="cursor-brand-mark">P</span><span>PhishShield</span></div>
+  <div class="cursor-top-meta">URL intelligence&nbsp;&nbsp; / &nbsp;&nbsp;Local analysis</div>
+</div>
+<section class="cursor-hero">
+  <div class="cursor-kicker">A clearer view of suspicious links</div>
+  <div class="cursor-title">Know before<br/><span>you click.</span></div>
+  <div class="cursor-description">Inspect a URL, understand the signals behind it, and make a more informed decision. PhishShield analyzes the address as text — it never visits the destination.</div>
+  <div class="cursor-trust">
+    <span class="cursor-chip">✳ Explainable signals</span>
+    <span class="cursor-chip">↗ Destination never opened</span>
+    <span class="cursor-chip">⌘ ML-assisted analysis</span>
+  </div>
+</section>
+""", unsafe_allow_html=True)
+
+
 with st.sidebar:
     st.markdown("## 🛡️ PhishShield")
     st.caption("URL THREAT ANALYSIS")
