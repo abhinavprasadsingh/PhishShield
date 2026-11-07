@@ -12,6 +12,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from src.features import FEATURE_NAMES, extract_features, normalize_url
+from src.reputation import check_reputation
 
 app = FastAPI(title="PhishShield API", version="1.0.0")
 app.add_middleware(
@@ -51,7 +52,7 @@ def load_model():
     return _model
 
 
-def assess(features: dict[str, int]) -> dict[str, Any]:
+def assess(features: dict[str, int], url: str | None = None) -> dict[str, Any]:
     reasons: list[str] = []
     if features["has_ip_host"]:
         reasons.append("The hostname is an IP address rather than a typical domain.")
@@ -115,7 +116,10 @@ def assess(features: dict[str, int]) -> dict[str, Any]:
             feature_importance = []
             mode = "Heuristic demo mode (model unavailable)"
 
+    reputation = check_reputation(url) if url else {"verdict": "inconclusive", "checks": []}
+
     return {
+        "reputation": reputation,
         "risk_label": label,
         "risk_score": score,
         "reasons": reasons,
@@ -139,7 +143,7 @@ def analyze(payload: AnalyzeRequest):
     try:
         normalized = normalize_url(payload.url)
         features = extract_features(normalized)
-        result = assess(features)
+        result = assess(features, normalized)
         return {"url": normalized, **result}
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -164,7 +168,7 @@ def scan_csv(payload: CsvRequest):
             try:
                 normalized = normalize_url(raw_url)
                 features = extract_features(normalized)
-                result = assess(features)
+                result = assess(features, normalized)
                 rows.append({
                     "url": normalized,
                     "model_result": ("Potential phishing" if result["prediction"] == 1 else "Likely legitimate (model class)") if result["prediction"] is not None else "Heuristic only (no model file)",
