@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+import os
 import re
 from pathlib import Path
 from urllib.parse import urlparse
@@ -14,7 +15,7 @@ from src.csv_safety import sanitize_csv_for_spreadsheet
 # a component iframe, so explicitly set the public app URL as page_location.
 # This must be verified in GA4 Realtime after the app redeploys.
 GA_MEASUREMENT_ID = "G-6L7WQYZ1LK"
-GA_APP_URL = "https://phishsentinel.streamlit.app/"
+GA_APP_URL = os.environ.get("RENDER_EXTERNAL_URL") or os.environ.get("PUBLIC_APP_URL") or "http://localhost"
 components.html(
     f"""
     <script async src="https://www.googletagmanager.com/gtag/js?id={GA_MEASUREMENT_ID}"></script>
