@@ -54,14 +54,28 @@ streamlit run app.py
 
 Streamlit prints a local address, usually http://localhost:8501.
 
-## Deploy on Streamlit Community Cloud
+## Deploy on Render
 
-1. Push this repository to GitHub.
-2. Open https://share.streamlit.io/ and sign in with GitHub.
-3. Create an app using repository `abhinavprasadsingh/PhishShield`, branch `main`, and main file `app.py`.
-4. Deploy and test valid and invalid inputs.
+PhishShield keeps its Streamlit interface and runs as a Render Web Service. The repository includes a Render Blueprint (`render.yaml`) and a pinned Python runtime (`.python-version`).
 
-A successful GitHub push does not itself confirm that the hosted app has redeployed successfully. Check the deployment status in Streamlit Community Cloud.
+### Deploy with Render Blueprint
+
+1. Sign in to [Render](https://dashboard.render.com/).
+2. Connect your GitHub account to Render if it is not connected already.
+3. Open [New + → Blueprint](https://dashboard.render.com/blueprints) and select this repository: `abhinavprasadsingh/PhishShield`.
+4. Select branch `main`. Render reads `render.yaml` and configures the service.
+5. Review the service and choose the Free plan, then create the Blueprint.
+6. Wait for the build and deploy to finish. Open the generated `*.onrender.com` URL and test valid and invalid URLs, CSV scanning, and the dashboard.
+
+The service binds Streamlit to Render's `0.0.0.0` host and the port supplied in the `PORT` environment variable. Render's health check uses Streamlit's `/_stcore/health` endpoint. The app reads Render's `RENDER_EXTERNAL_URL` for analytics page location; no API key is required for hosting.
+
+### Important deployment notes
+
+- A GitHub push triggers a new deploy when automatic deploys are enabled for the linked `main` branch. A successful push alone does not prove that the live deployment succeeded.
+- Render Free web services spin down after 15 minutes without inbound traffic and can take time to wake on the next visit.
+- The scan history is session-only and is not persisted in a database. Uploaded files and generated files on an ephemeral service filesystem should not be treated as permanent storage.
+- The trained model file `models/phishing_model.joblib` is not committed by default. Unless you add the artifact through a secure, reproducible deployment process, the app will use heuristic demo mode.
+- The previous Streamlit Community Cloud deployment is not automatically deleted. Keep it until the Render deployment has been tested, then you can optionally retire it.
 
 ## Train a supervised model (optional)
 
