@@ -36,7 +36,7 @@ class handler(BaseHTTPRequestHandler):
 
             normalized = normalize_url(raw_url)
             features = extract_features(normalized)
-            result = assess(features)
+            result = assess(features, normalized)
             self._json(200, {"url": normalized, **result})
         except (json.JSONDecodeError, UnicodeDecodeError):
             self._json(400, {"detail": "Request body must contain valid JSON."})
