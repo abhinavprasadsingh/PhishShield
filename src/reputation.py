@@ -90,7 +90,7 @@ def check_reputation(url: str) -> dict:
         verdict = "threat_detected"
     else:
         configured = [status for status in statuses if status not in {"not_configured"}]
-        if configured and all(status == "clean" for status in configured) and len(configured) == len(statuses):
+        if configured and all(status == "clean" for status in configured):
             verdict = "no_known_threats_detected"
         else:
             verdict = "inconclusive"
