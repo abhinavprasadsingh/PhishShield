@@ -12,7 +12,9 @@ type Analysis = {
   mode: string;
   features: Record<string, number>;
 };
-type CsvRow = { url: string; label: string; risk_label: string; risk_score: number; mode: string };
+type CsvRow = { url: string; model_result: string; model_confidence: number | null; rule_score: number; warning_signals: string; validation: string };
+type HistoryRow = { scannedAt: string; url: string; hostname: string; score: number; reasons: string[] };
+type DomainInfo = { hostname: string; scheme: string; hostType: string; subdomains: number; port: string; pathLength: number; hasQuery: boolean; rootHint: string };
 
 const featureLabels: Record<string, string> = {
   url_length: "URL length", hostname_length: "Hostname length", dot_count: "Dot count",
@@ -32,7 +34,11 @@ export default function Home() {
   const [csvName, setCsvName] = useState("");
   const [csvBusy, setCsvBusy] = useState(false);
   const [csvMessage, setCsvMessage] = useState("");
-  const [tab, setTab] = useState<"scanner" | "batch">("scanner");
+  const [tab, setTab] = useState<"scanner" | "batch" | "domain" | "history" | "model">("scanner");
+  const [history, setHistory] = useState<HistoryRow[]>([]);
+  const [domainInput, setDomainInput] = useState("");
+  const [domainInfo, setDomainInfo] = useState<DomainInfo | null>(null);
+  const [domainError, setDomainError] = useState("");
 
   const riskClass = useMemo(() => {
     if (!analysis) return "";
@@ -50,6 +56,8 @@ export default function Home() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.detail || "Unable to analyze this URL.");
       setAnalysis(data);
+      const parsed = new URL(data.url);
+      setHistory(prev => [...prev, { scannedAt: new Date().toISOString(), url: data.url, hostname: parsed.hostname, score: data.risk_score, reasons: data.reasons }].slice(-200));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Try again.");
     } finally { setLoading(false); }
@@ -76,7 +84,7 @@ export default function Home() {
 
   function downloadCsv() {
     if (!csvRows.length) return;
-    const headers = ["url", "label", "risk_label", "risk_score", "mode"];
+    const headers = ["url", "model_result", "model_confidence", "rule_score", "warning_signals", "validation"];
     const quote = (value: unknown) => '"' + String(value ?? "").replace(/"/g, '""') + '"';
     const content = [headers.join(","), ...csvRows.map(row => headers.map(key => quote(row[key as keyof CsvRow])).join(","))].join("\n");
     const blob = new Blob([content], { type: "text/csv;charset=utf-8" });
@@ -90,6 +98,9 @@ export default function Home() {
         <div className="side-label">WORKSPACE</div>
         <button className={tab === "scanner" ? "nav-item active" : "nav-item"} onClick={() => setTab("scanner")}><span>⌕</span> URL scanner</button>
         <button className={tab === "batch" ? "nav-item active" : "nav-item"} onClick={() => setTab("batch")}><span>▤</span> Batch analysis</button>
+        <button className={tab === "domain" ? "nav-item active" : "nav-item"} onClick={() => setTab("domain")}><span>◎</span> Domain intelligence</button>
+        <button className={tab === "history" ? "nav-item active" : "nav-item"} onClick={() => setTab("history")}><span>◷</span> History & analytics</button>
+        <button className={tab === "model" ? "nav-item active" : "nav-item"} onClick={() => setTab("model")}><span>▥</span> Model dashboard</button>
         <div className="side-bottom"><span className="status-dot" /> SYSTEM READY <small>PhishShield engine · v1.0</small></div>
       </aside>
 
@@ -104,7 +115,7 @@ export default function Home() {
             <div className="hero-tags"><span>✳ Explainable signals</span><span>⌁ No destination visits</span><span>◈ Python-powered analysis</span></div>
           </section>
 
-          <div className="section-heading"><div><div className="eyebrow">YOUR SECURITY WORKSPACE</div><h2>{tab === "scanner" ? "URL scanner" : "Batch analysis"}</h2></div><span className="secure-chip"><i /> PRIVATE BY DESIGN</span></div>
+          <div className="section-heading"><div><div className="eyebrow">YOUR SECURITY WORKSPACE</div><h2>{{scanner:"URL scanner",batch:"Batch analysis",domain:"Domain intelligence",history:"History & analytics",model:"Model dashboard"}[tab]}</h2></div><span className="secure-chip"><i /> PRIVATE BY DESIGN</span></div>
 
           {tab === "scanner" ? <>
             <section className="scan-card">
@@ -127,12 +138,12 @@ export default function Home() {
               <div className="feature-card"><div className="feature-title"><div><span className="mini-label">URL FEATURE BREAKDOWN</span><h3>Extracted signals</h3></div><span className="mode-chip">{analysis.mode}</span></div><div className="feature-grid">{Object.entries(analysis.features).map(([key, value]) => <div className="feature" key={key}><span>{featureLabels[key] || key}</span><b>{value}</b></div>)}</div></div>
               <div className="disclaimer">ⓘ A low-risk result does not guarantee a website is safe. HTTPS alone does not prove legitimacy. Do not submit links containing private tokens or session IDs.</div>
             </section>}
-          </> : <section className="scan-card batch-card">
-            <div className="card-top"><div><span className="card-icon">▤</span><div><h3>Analyze a URL list</h3><p>Upload a CSV with <code>url</code> and <code>label</code> columns (1 = phishing, 0 = legitimate).</p></div></div><span className="step-label">02 / BATCH</span></div>
-            <label className="dropzone"><input type="file" accept=".csv,text/csv" onChange={uploadCsv} /><span className="upload-icon">↑</span><b>{csvBusy ? "Analyzing your file…" : csvName || "Choose a CSV file"}</b><small>CSV format · up to 500 URLs · 2 MB maximum</small></label>
+          </> : tab === "batch" ? <section className="scan-card batch-card">
+            <div className="card-top"><div><span className="card-icon">▤</span><div><h3>Analyze a URL list</h3><p>Upload a CSV containing a column named <code>url</code>. Up to 1,000 URLs are supported per file.</p></div></div><span className="step-label">02 / BATCH</span></div>
+            <label className="dropzone"><input type="file" accept=".csv,text/csv" onChange={uploadCsv} /><span className="upload-icon">↑</span><b>{csvBusy ? "Analyzing your file…" : csvName || "Choose a CSV file"}</b><small>CSV format · up to 1,000 URLs · 2 MB maximum</small></label>
             {csvBusy && <div className="loading-line"><span className="spinner" /> Processing URLs…</div>}
             {csvMessage && <div className="success-box">{csvMessage}</div>}
-            {csvRows.length > 0 && <><div className="table-actions"><b>{csvRows.length} scan results</b><button className="download-button" onClick={downloadCsv}>↓ DOWNLOAD CSV</button></div><div className="table-wrap"><table><thead><tr><th>URL</th><th>RISK ASSESSMENT</th><th>SCORE</th></tr></thead><tbody>{csvRows.map((row,i)=><tr key={i}><td className="url-cell">{row.url}</td><td>{row.risk_label}</td><td>{row.risk_score}/100</td></tr>)}</tbody></table></div></>}
+            {csvRows.length > 0 && <><div className="table-actions"><b>{csvRows.length} scan results</b><button className="download-button" onClick={downloadCsv}>↓ DOWNLOAD CSV</button></div><div className="table-wrap"><table><thead><tr><th>URL</th><th>MODEL RESULT</th><th>MODEL CONFIDENCE</th><th>RULE SCORE</th></tr></thead><tbody>{csvRows.map((row,i)=><tr key={i}><td className="url-cell">{row.url}</td><td>{row.model_result}</td><td>{row.model_confidence == null ? "—" : `${row.model_confidence}%`}</td><td>{row.rule_score}/100</td></tr>)}</tbody></table></div></>}
           </section>}
 
           <section className="bottom-grid"><div className="info-card"><span className="info-icon">⌁</span><div><b>Text-only inspection</b><p>PhishShield parses URL structure. It never visits the submitted destination.</p></div></div><div className="info-card"><span className="info-icon violet">◈</span><div><b>Explainable by design</b><p>See the URL signals behind each heuristic assessment.</p></div></div><div className="info-card"><span className="info-icon green">✳</span><div><b>Security is layered</b><p>Use this as one signal alongside browser protection and good judgment.</p></div></div></section>
