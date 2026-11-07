@@ -8,7 +8,9 @@ This branch adds a Next.js interface and Python API while retaining the existing
 - FastAPI Python function at `/api`
 - `POST /api/analyze` checks one URL
 - `POST /api/scan-csv` scans CSV text (up to 500 rows / 2 MB)
-- The API parses URL text only and never visits submitted destinations.
+- The app does not open submitted destinations. When API keys are configured, the URL is sent to Google Safe Browsing and VirusTotal for reputation lookups. VirusTotal uses an existing report only; it does not submit new scans.
+- Set GOOGLE_SAFE_BROWSING_API_KEY and VIRUSTOTAL_API_KEY in Vercel Project Settings → Environment Variables. Missing keys show as not configured; unavailable providers produce an inconclusive result.
+- A no-match result is not proof that a website is safe.
 - If `models/phishing_model.joblib` is present, the API attempts model inference; otherwise it clearly reports heuristic demo mode.
 
 ## Deploy
