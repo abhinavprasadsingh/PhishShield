@@ -108,7 +108,8 @@ def assess(features: dict[str, int], url: str | None = None) -> dict[str, Any]:
                     key=lambda item: item["importance"], reverse=True
                 )[:8]
             mode = "Trained machine-learning model"
-            label = "Potential phishing URL" if prediction == 1 else "Model found fewer phishing signals"
+            # Keep the headline based on transparent heuristic signals. Model output is shown separately
+            # because its confidence is not calibrated and must not independently label a URL as phishing.
         except Exception:
             prediction = None
             probability = None
