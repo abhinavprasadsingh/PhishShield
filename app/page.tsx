@@ -9,10 +9,12 @@ type Analysis = {
   reasons: string[];
   prediction: number | null;
   phishing_probability: number | null;
+  model_confidence: number | null;
+  feature_importance: { feature: string; importance: number }[];
   mode: string;
   features: Record<string, number>;
 };
-type CsvRow = { url: string; model_result: string; model_confidence: number | null; rule_score: number; warning_signals: string; validation: string };
+type CsvRow = { url: string; model_result: string; model_confidence: number | null; rule_score: number | string; warning_signals: string; validation: string };
 type HistoryRow = { scannedAt: string; url: string; hostname: string; score: number; reasons: string[] };
 type DomainInfo = { hostname: string; scheme: string; hostType: string; subdomains: number; port: string; pathLength: number; hasQuery: boolean; rootHint: string };
 
@@ -135,6 +137,7 @@ export default function Home() {
                 <div className="score-card"><span className="mini-label">HEURISTIC SIGNAL SCORE</span><div className={`score-number ${riskClass}`}>{analysis.risk_score}<small>/100</small></div><div className="meter"><span className={riskClass} style={{ width: `${analysis.risk_score}%` }} /></div><p>Higher scores mean more URL warning patterns were found. This is not a calibrated probability.</p></div>
                 <div className="reason-card"><span className="mini-label">WHAT WE NOTICED</span>{analysis.reasons.map((reason, i) => <div className="reason" key={i}><span>!</span>{reason}</div>)}</div>
               </div>
+              {analysis.prediction !== null && <div className="score-card model-result-card"><span className="mini-label">TRAINED MODEL OUTPUT</span><h3>{analysis.prediction === 1 ? "Potential phishing" : "Model classifies as likely legitimate"}</h3><p>Model confidence: {analysis.model_confidence == null ? "Not available" : `${analysis.model_confidence}%`} · This is not a probability that the URL is safe.</p>{analysis.feature_importance.length > 0 && <div className="importance-list">{analysis.feature_importance.map(item=><div className="importance-row" key={item.feature}><span>{item.feature}</span><b>{item.importance.toFixed(3)}</b></div>)}</div>}</div>}
               <div className="feature-card"><div className="feature-title"><div><span className="mini-label">URL FEATURE BREAKDOWN</span><h3>Extracted signals</h3></div><span className="mode-chip">{analysis.mode}</span></div><div className="feature-grid">{Object.entries(analysis.features).map(([key, value]) => <div className="feature" key={key}><span>{featureLabels[key] || key}</span><b>{value}</b></div>)}</div></div>
               <div className="disclaimer">ⓘ A low-risk result does not guarantee a website is safe. HTTPS alone does not prove legitimacy. Do not submit links containing private tokens or session IDs.</div>
             </section>}
@@ -143,7 +146,7 @@ export default function Home() {
             <label className="dropzone"><input type="file" accept=".csv,text/csv" onChange={uploadCsv} /><span className="upload-icon">↑</span><b>{csvBusy ? "Analyzing your file…" : csvName || "Choose a CSV file"}</b><small>CSV format · up to 1,000 URLs · 2 MB maximum</small></label>
             {csvBusy && <div className="loading-line"><span className="spinner" /> Processing URLs…</div>}
             {csvMessage && <div className="success-box">{csvMessage}</div>}
-            {csvRows.length > 0 && <><div className="table-actions"><b>{csvRows.length} scan results</b><button className="download-button" onClick={downloadCsv}>↓ DOWNLOAD CSV</button></div><div className="table-wrap"><table><thead><tr><th>URL</th><th>MODEL RESULT</th><th>MODEL CONFIDENCE</th><th>RULE SCORE</th></tr></thead><tbody>{csvRows.map((row,i)=><tr key={i}><td className="url-cell">{row.url}</td><td>{row.model_result}</td><td>{row.model_confidence == null ? "—" : `${row.model_confidence}%`}</td><td>{row.rule_score}/100</td></tr>)}</tbody></table></div></>}
+            {csvRows.length > 0 && <><div className="table-actions"><b>{csvRows.length} scan results</b><button className="download-button" onClick={downloadCsv}>↓ DOWNLOAD CSV</button></div><div className="table-wrap"><table><thead><tr><th>URL</th><th>MODEL RESULT</th><th>MODEL CONFIDENCE</th><th>RULE SCORE</th></tr></thead><tbody>{csvRows.map((row,i)=><tr key={i}><td className="url-cell">{row.url}</td><td>{row.model_result}</td><td>{row.model_confidence == null ? "—" : `${row.model_confidence}%`}</td><td>{row.rule_score === "" ? "—" : `${row.rule_score}/100`}</td></tr>)}</tbody></table></div></>}
           </section> : tab === "domain" ? <section className="scan-card batch-card">
             <div className="card-top"><div><span className="card-icon">◎</span><div><h3>Domain structure inspector</h3><p>Offline URL parsing only — no DNS, WHOIS, certificate, reputation or domain-age lookups.</p></div></div><span className="step-label">03 / DOMAIN</span></div>
             <form onSubmit={(event) => { event.preventDefault(); setDomainError(""); setDomainInfo(null); try { const raw = domainInput.trim(); if (!raw) throw new Error("Enter a URL first."); const parsed = new URL(/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(raw) ? raw : "https://" + raw); if (!["http:","https:"].includes(parsed.protocol) || !parsed.hostname.includes(".")) throw new Error("Enter a valid HTTP or HTTPS URL."); const labels = parsed.hostname.toLowerCase().replace(/\.$/,"").split(".").filter(Boolean); const hostType = /^\d{1,3}(\.\d{1,3}){3}$/.test(parsed.hostname) ? "IP address" : "Domain hostname"; setDomainInfo({ hostname: parsed.hostname, scheme: parsed.protocol.replace(":","").toUpperCase(), hostType, subdomains: Math.max(0,labels.length-2), port: parsed.port || "Default / not specified", pathLength: parsed.pathname.length, hasQuery: Boolean(parsed.search), rootHint: labels.slice(-2).join(".") }); } catch(e) { setDomainError(e instanceof Error ? e.message : "Invalid URL."); } }}>
