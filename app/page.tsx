@@ -27,6 +27,17 @@ const featureLabels: Record<string, string> = {
   path_length: "Path length", query_length: "Query length"
 };
 
+async function readApiJson(response: Response) {
+  const body = await response.text();
+  try {
+    return JSON.parse(body);
+  } catch {
+    throw new Error(
+      `The API returned a non-JSON response (HTTP ${response.status}). The server route may be unavailable; please retry in a moment.`
+    );
+  }
+}
+
 export default function Home() {
   const [url, setUrl] = useState("");
   const [analysis, setAnalysis] = useState<Analysis | null>(null);
@@ -55,7 +66,7 @@ export default function Home() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url })
       });
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok) throw new Error(data.detail || "Unable to analyze this URL.");
       setAnalysis(data);
       const parsed = new URL(data.url);
@@ -75,7 +86,7 @@ export default function Home() {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ csv_text })
       });
-      const data = await response.json();
+      const data = await readApiJson(response);
       if (!response.ok) throw new Error(data.detail || "Unable to scan this CSV.");
       setCsvRows(data.rows);
       setCsvMessage(`Scanned ${data.scanned} URLs · Skipped ${data.skipped}${data.scanned + data.skipped >= data.limit ? " · 1,000-row limit reached" : ""}`);
