@@ -174,7 +174,15 @@ def scan_csv(payload: CsvRequest):
                     "validation": "OK",
                 })
                 scanned += 1
-            except ValueError:
+            except ValueError as exc:
+                rows.append({
+                    "url": raw_url,
+                    "model_result": "Not analyzed",
+                    "model_confidence": None,
+                    "rule_score": "",
+                    "warning_signals": "",
+                    "validation": str(exc),
+                })
                 skipped += 1
         return {"rows": rows, "scanned": scanned, "skipped": skipped, "limit": 1000}
     except csv.Error as exc:
