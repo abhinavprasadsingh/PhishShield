@@ -78,20 +78,41 @@ def assess(features: dict[str, int]) -> dict[str, Any]:
     prediction = None
     probability = None
     mode = "Heuristic demo mode"
+    model_confidence = None
+    feature_importance = []
     if model is not None:
         try:
             import pandas as pd
             row = pd.DataFrame([[features[name] for name in FEATURE_NAMES]], columns=FEATURE_NAMES)
             prediction = int(model.predict(row)[0])
             if hasattr(model, "predict_proba"):
+                probabilities = model.predict_proba(row)[0]
                 classes = list(model.classes_)
                 if 1 in classes:
-                    probability = round(float(model.predict_proba(row)[0][classes.index(1)]) * 100, 1)
+                    probability = round(float(probabilities[classes.index(1)]) * 100, 1)
+                model_confidence = round(float(max(probabilities)) * 100, 1)
+            estimator = model
+            if hasattr(estimator, "named_steps"):
+                estimator = estimator.named_steps.get("model", estimator)
+            importance = getattr(estimator, "feature_importances_", None)
+            if importance is None and hasattr(estimator, "coef_"):
+                try:
+                    importance = abs(estimator.coef_[0])
+                except (IndexError, TypeError):
+                    importance = None
+            if importance is not None and len(importance) == len(FEATURE_NAMES):
+                feature_importance = sorted(
+                    [{"feature": name.replace("_", " ").title(), "importance": float(value)}
+                     for name, value in zip(FEATURE_NAMES, importance)],
+                    key=lambda item: item["importance"], reverse=True
+                )[:8]
             mode = "Trained machine-learning model"
             label = "Potential phishing URL" if prediction == 1 else "Model found fewer phishing signals"
         except Exception:
             prediction = None
             probability = None
+            model_confidence = None
+            feature_importance = []
             mode = "Heuristic demo mode (model unavailable)"
 
     return {
@@ -100,6 +121,8 @@ def assess(features: dict[str, int]) -> dict[str, Any]:
         "reasons": reasons,
         "prediction": prediction,
         "phishing_probability": probability,
+        "model_confidence": model_confidence,
+        "feature_importance": feature_importance,
         "mode": mode,
         "features": features,
     }
@@ -126,13 +149,13 @@ def analyze(payload: AnalyzeRequest):
 def scan_csv(payload: CsvRequest):
     try:
         reader = csv.DictReader(io.StringIO(payload.csv_text))
-        if not reader.fieldnames or not {"url", "label"}.issubset(set(reader.fieldnames)):
-            raise HTTPException(status_code=400, detail="CSV must contain 'url' and 'label' columns.")
+        if not reader.fieldnames or "url" not in set(reader.fieldnames):
+            raise HTTPException(status_code=400, detail="CSV must contain a column named url.")
         rows = []
         scanned = 0
         skipped = 0
         for row in reader:
-            if scanned + skipped >= 500:
+            if scanned + skipped >= 1000:
                 break
             raw_url = (row.get("url") or "").strip()
             if not raw_url:
@@ -144,14 +167,15 @@ def scan_csv(payload: CsvRequest):
                 result = assess(features)
                 rows.append({
                     "url": normalized,
-                    "label": (row.get("label") or "").strip(),
-                    "risk_label": result["risk_label"],
-                    "risk_score": result["risk_score"],
-                    "mode": result["mode"],
+                    "model_result": ("Potential phishing" if result["prediction"] == 1 else "Likely legitimate (model class)") if result["prediction"] is not None else "Heuristic only (no model file)",
+                    "model_confidence": result["model_confidence"],
+                    "rule_score": result["risk_score"],
+                    "warning_signals": "; ".join(result["reasons"]),
+                    "validation": "OK",
                 })
                 scanned += 1
             except ValueError:
                 skipped += 1
-        return {"rows": rows, "scanned": scanned, "skipped": skipped, "limit": 500}
+        return {"rows": rows, "scanned": scanned, "skipped": skipped, "limit": 1000}
     except csv.Error as exc:
         raise HTTPException(status_code=400, detail="Could not parse the CSV file.") from exc
