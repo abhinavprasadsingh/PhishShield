@@ -13,6 +13,7 @@ type Analysis = {
   feature_importance: { feature: string; importance: number }[];
   mode: string;
   features: Record<string, number>;
+  reputation?: { verdict: string; checks: { provider: string; status: string; message: string; malicious?: number; suspicious?: number; engines_total?: number; threat_types?: string[] }[] };
 };
 type CsvRow = { url: string; model_result: string; model_confidence: number | null; rule_score: number | string; warning_signals: string; validation: string };
 type HistoryRow = { scannedAt: string; url: string; hostname: string; score: number; reasons: string[] };
@@ -124,7 +125,7 @@ export default function Home() {
             <div className="hero-orbit orbit-one" /><div className="hero-orbit orbit-two" />
             <div className="eyebrow"><span className="eyebrow-line" /> URL INTELLIGENCE · THREAT INSPECTION</div>
             <h1>Stay one step<br /><span>ahead of the bait.</span></h1>
-            <p>Inspect suspicious links, uncover hidden warning signs, and make smarter decisions before you click. Your submitted URL is analyzed as text — never opened.</p>
+            <p>Inspect suspicious links, uncover hidden warning signs, and make smarter decisions before you click. URL structure is analyzed locally. Optional threat-intelligence providers receive the submitted URL for reputation lookups; PhishShield does not open the destination.</p>
             <div className="hero-tags"><span>✳ Explainable signals</span><span>⌁ No destination visits</span><span>◈ Python-powered analysis</span></div>
           </section>
 
@@ -148,6 +149,11 @@ export default function Home() {
                 <div className="score-card"><span className="mini-label">HEURISTIC SIGNAL SCORE</span><div className={`score-number ${riskClass}`}>{analysis.risk_score}<small>/100</small></div><div className="meter"><span className={riskClass} style={{ width: `${analysis.risk_score}%` }} /></div><p>Higher scores mean more URL warning patterns were found. This is not a calibrated probability.</p></div>
                 <div className="reason-card"><span className="mini-label">WHAT WE NOTICED</span>{analysis.reasons.map((reason, i) => <div className="reason" key={i}><span>!</span>{reason}</div>)}</div>
               </div>
+              {analysis.reputation && <div className="feature-card reputation-card">
+                <div className="feature-title"><div><span className="mini-label">THREAT INTELLIGENCE</span><h3>{analysis.reputation.verdict === "threat_detected" ? "Known threat detected" : analysis.reputation.verdict === "no_known_threats_detected" ? "No known threats detected" : "Inconclusive — more checks needed"}</h3></div><span className={analysis.reputation.verdict === "threat_detected" ? "risk-pill danger" : analysis.reputation.verdict === "no_known_threats_detected" ? "risk-pill safe" : "risk-pill warning"}>{analysis.reputation.verdict === "threat_detected" ? "THREAT" : analysis.reputation.verdict === "no_known_threats_detected" ? "NO MATCHES" : "INCOMPLETE"}</span></div>
+                <div className="reputation-list">{analysis.reputation.checks.map((check) => <div className="reason" key={check.provider}><span>{check.status === "malicious" ? "!" : check.status === "clean" ? "✓" : "?"}</span><div><b>{check.provider}</b><br />{check.message}{check.engines_total ? ` · ${check.malicious || 0} malicious / ${check.engines_total} engines` : ""}{check.threat_types?.length ? ` · ${check.threat_types.join(", ")}` : ""}</div></div>)}</div>
+                <p className="disclaimer">A clean lookup means no match was found in the checked data at this time. It does not prove a website is safe. Unconfigured or unavailable services never count as clean.</p>
+              </div>}
               {analysis.prediction !== null && <div className="score-card model-result-card"><span className="mini-label">TRAINED MODEL OUTPUT</span><h3>{analysis.prediction === 1 ? "Potential phishing" : "Model classifies as likely legitimate"}</h3><p>Model confidence: {analysis.model_confidence == null ? "Not available" : `${analysis.model_confidence}%`} · This is not a probability that the URL is safe.</p>{analysis.feature_importance.length > 0 && <div className="importance-list">{analysis.feature_importance.map(item=><div className="importance-row" key={item.feature}><span>{item.feature}</span><b>{item.importance.toFixed(3)}</b></div>)}</div>}</div>}
               <div className="feature-card"><div className="feature-title"><div><span className="mini-label">URL FEATURE BREAKDOWN</span><h3>Extracted signals</h3></div><span className="mode-chip">{analysis.mode}</span></div><div className="feature-grid">{Object.entries(analysis.features).map(([key, value]) => <div className="feature" key={key}><span>{featureLabels[key] || key}</span><b>{value}</b></div>)}</div></div>
               <div className="disclaimer">ⓘ A low-risk result does not guarantee a website is safe. HTTPS alone does not prove legitimacy. Do not submit links containing private tokens or session IDs.</div>
@@ -178,7 +184,7 @@ export default function Home() {
             <div className="disclaimer">ⓘ The model artifact is not committed to GitHub by default. These recorded metrics do not prove that the live app is using this trained model. See the evaluation report for methodology and limitations.</div>
           </section>}
 
-          <section className="bottom-grid"><div className="info-card"><span className="info-icon">⌁</span><div><b>Text-only inspection</b><p>PhishShield parses URL structure. It never visits the submitted destination.</p></div></div><div className="info-card"><span className="info-icon violet">◈</span><div><b>Explainable by design</b><p>See the URL signals behind each heuristic assessment.</p></div></div><div className="info-card"><span className="info-icon green">✳</span><div><b>Security is layered</b><p>Use this as one signal alongside browser protection and good judgment.</p></div></div></section>
+          <section className="bottom-grid"><div className="info-card"><span className="info-icon">⌁</span><div><b>Text-only inspection</b><p>PhishShield parses URL structure and checks configured threat-intelligence sources. It does not open the destination itself.</p></div></div><div className="info-card"><span className="info-icon violet">◈</span><div><b>Explainable by design</b><p>See the URL signals behind each heuristic assessment.</p></div></div><div className="info-card"><span className="info-icon green">✳</span><div><b>Security is layered</b><p>Use this as one signal alongside browser protection and good judgment.</p></div></div></section>
           <footer>© 2026 PHISHSHIELD <span>BUILT FOR A SAFER INTERNET</span></footer>
         </div>
       </section>
